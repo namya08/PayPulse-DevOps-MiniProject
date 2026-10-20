@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+.npm/
+
+# Build output
+frontend/dist/
+backend/coverage/
+
+# Test output
+backend/test-results/
+performance/results/*.jtl
+performance/results/*.log
+performance/results/*.csv
+performance/results/comparison.md
+
+# JMeter working files
+performance/jmeter/output/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment / secrets
+.env
+.env.local
+*.local
+
+# Editors / OS
+.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Docker / local volumes
+grafana-data/
+jenkins_home/

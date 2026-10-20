@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: payment-app
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+
+    rule_files:
+      - /etc/prometheus/alerts.yml
+
+    scrape_configs:
+      - job_name: payment-api
+        metrics_path: /metrics
+        static_configs:
+          - targets: ["backend.payment-app.svc.cluster.local:3000"]
+
+      - job_name: prometheus
+        static_configs:
+          - targets: ["localhost:9090"]
+
+  alerts.yml: |
+    groups:
+      - name: payment-api-alerts
+        rules:
+          - alert: PaymentApiDown
+            expr: up{job="payment-api"} == 0
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Payment API target is down"
+          - alert: HighHttpErrorRate
+            expr: |
+              sum(rate(http_requests_total{job="payment-api",status=~"4..|5.."}[5m]))
+                /
+              clamp_min(sum(rate(http_requests_total{job="payment-api"}[5m])), 0.001)
+                > 0.05
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "HTTP error rate above 5%"
+          - alert: HighP95Latency
+            expr: |
+              histogram_quantile(0.95,
+                sum by (le) (rate(http_request_duration_seconds_bucket{job="payment-api"}[5m]))
+              ) > 1
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "p95 latency above 1s"
